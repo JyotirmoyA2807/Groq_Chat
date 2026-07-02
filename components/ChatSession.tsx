@@ -427,6 +427,10 @@ export function ChatSession({
             )}
           </button>
         </div>
+        {/* Character counter */}
+        <div className="text-xs text-neutral-500 dark:text-neutral-400 text-right pr-2">
+          {input.length} characters
+        </div>
       </form>
     </>
   );
