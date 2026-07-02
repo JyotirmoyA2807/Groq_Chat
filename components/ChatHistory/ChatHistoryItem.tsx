@@ -6,7 +6,7 @@ import { UIMessage } from "ai";
 import { getModelByValue } from "@/lib/model";
 
 // Generate display title from messages
-function getDisplayTitle(messages: UIMessage[]): string {
+export function getDisplayTitle(messages: UIMessage[]): string {
   const firstUserMessage = messages.find(
     (msg) =>
       msg.role === "user" && msg.parts?.some((part) => part.type === "text")

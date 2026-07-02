@@ -8,6 +8,8 @@ import { ChatHistorySidebar } from "./ChatHistory";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { SavedChat } from "@/lib/chat-history";
 import { useNotifications } from "./Notification";
+import { getDisplayTitle } from "./ChatHistory/ChatHistoryItem"; // NEW: Import getDisplayTitle
+import { exportChatAsMarkdown } from "@/lib/export-markdown"; // NEW: Import exportChatAsMarkdown
 
 const ChatContainer = memo(({ userIp }: { userIp: string }) => {
   const [selectedModel, setSelectedModel] = useState<Model["value"]>(
@@ -66,6 +68,17 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
     },
     [enableAutoSave, selectedModel, addNotification]
   );
+
+  // NEW: Export chat handler
+  const handleExportChat = useCallback(() => {
+    if (currentMessages.length === 0) {
+      addNotification("No messages to export", "info");
+      return;
+    }
+    const chatTitle = getDisplayTitle(currentMessages); // Reuse existing helper for filename
+    exportChatAsMarkdown(currentMessages, chatTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase());
+    addNotification("Chat exported as Markdown", "success", 3000);
+  }, [currentMessages, addNotification]);
 
   // Chat history handlers
 
@@ -197,6 +210,15 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
                 >
                   🎨 Image Gen
                 </button>{" "}
+                {/* NEW: Export Chat Button */}
+                <button
+                  type="button"
+                  onClick={handleExportChat}
+                  className="rounded-lg bg-neutral-200 p-2 hover:bg-orange-600 hover:text-neutral-200 dark:bg-neutral-800 dark:hover:bg-orange-600 dark:hover:text-neutral-50 transition-all active:scale-95 flex-1"
+                  title="Export chat as Markdown"
+                >
+                  Export Chat
+                </button>
                 {[
                   {
                     label: "Make Shorter",
