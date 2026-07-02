@@ -23,7 +23,12 @@ export interface UseChatHistoryReturn {
   setCurrentChatId: (chatId: string | null) => void;
 
   // Auto-save functionality
-  enableAutoSave: (messages: UIMessage[], model: string) => void;
+  enableAutoSave: (
+    messages: UIMessage[],
+    model: string,
+    onSaveSuccess?: () => void,
+    onSaveError?: (message: string) => void
+  ) => void;
   disableAutoSave: () => void;
 }
 
@@ -194,10 +199,20 @@ export function useChatHistory(): UseChatHistoryReturn {
 
   // Auto-save functionality
   const enableAutoSave = useCallback(
-    (messages: UIMessage[], model: string) => {
+    (
+      messages: UIMessage[],
+      model: string,
+      onSaveSuccess?: () => void,
+      onSaveError?: (message: string) => void
+    ) => {
       // Clear existing timeout
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
+      }
+
+      // Don't auto-save empty messages
+      if (!messages || messages.length === 0) {
+        return;
       }
 
       // Check if we need to save (messages have changed)
@@ -208,14 +223,20 @@ export function useChatHistory(): UseChatHistoryReturn {
         lastSave.model !== model ||
         JSON.stringify(lastSave.messages) !== JSON.stringify(messages);
 
-      if (hasChanged && messages.length > 0) {
+      if (hasChanged) {
         // Debounce auto-save by 2 seconds
-        autoSaveTimeoutRef.current = setTimeout(() => {
-          lastAutoSaveRef.current = { messages: [...messages], model };
+        autoSaveTimeoutRef.current = setTimeout(async () => {
+          const savedChat = await saveCurrentChat(messages, model);
+          if (savedChat) {
+            lastAutoSaveRef.current = { messages: [...messages], model };
+            onSaveSuccess?.();
+          } else {
+            onSaveError?.("Failed to auto-save chat");
+          }
         }, 2000);
       }
     },
-    [saveCurrentChat]
+    [saveCurrentChat] 
   );
 
   const disableAutoSave = useCallback(() => {

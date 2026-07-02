@@ -56,13 +56,13 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
     (messages: UIMessage[]) => {
       setCurrentMessages(messages);
       // Enable auto-save for current chat
-      enableAutoSave(messages, selectedModel);
-      // Show user feedback for save attempt
-      if (messages.length > 0) {
-        setTimeout(() => {
-          addNotification("Chat saved", "success", 2000);
-        }, 2500);
-      }
+      // Pass notification callbacks to enableAutoSave
+      enableAutoSave(
+        messages,
+        selectedModel,
+        () => addNotification("Chat saved", "success", 2000),
+        (msg) => addNotification(msg, "error")
+      );
     },
     [enableAutoSave, selectedModel, addNotification]
   );
@@ -138,7 +138,8 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
       console.error("Error starting new chat:", err);
       addNotification("Failed to start new chat", "error");
     }
-  }, [
+  },
+  [
     currentMessages,
     selectedModel,
     saveCurrentChat,
@@ -156,7 +157,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
     if (error) {
       addNotification(error, "error");
     }
-  }, [error]); // Remove addNotification from dependencies to prevent re-renders
+  }, [error, addNotification]);
 
   return (
     <>
