@@ -1,9 +1,10 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useState, useCallback } from "react";
 import { SavedChat } from "@/lib/chat-history";
 import { UIMessage } from "ai";
 import { getModelByValue } from "@/lib/model";
+import { useNotifications } from "../Notification"; // Import useNotifications
 
 // Generate display title from messages
 function getDisplayTitle(messages: UIMessage[]): string {
@@ -50,9 +51,11 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
   onDelete,
 }: ChatHistoryItemProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCopied, setShowCopied] = useState(false); // State for copy confirmation
   const model = getModelByValue(chat.model);
   const modelLabel = model?.label || chat.model;
   const displayTitle = getDisplayTitle(chat.messages);
+  const { addNotification } = useNotifications(); // Initialize useNotifications hook
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -83,6 +86,21 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
     setShowDeleteConfirm(false);
   };
 
+  const handleCopyTitle = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(displayTitle);
+      setShowCopied(true);
+      addNotification("Chat title copied to clipboard!", "success", 2000);
+      setTimeout(() => setShowCopied(false), 2000); // Hide "Copied!" after 2 seconds
+    } catch (err) {
+      console.error("Failed to copy chat title:", err);
+      addNotification(
+        "Failed to copy chat title. Please check clipboard permissions.",
+        "error"
+      );
+    }
+  }, [displayTitle, addNotification]);
+
   return (
     <div
       className={`group relative p-3 rounded-lg border transition-all duration-200 ${
@@ -92,9 +110,9 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
       }`}
     >
       {/* Chat Title */}
-      <div className="mb-2">
+      <div className="mb-2 flex items-center justify-between relative"> {/* Added flex and relative */}
         <h3
-          className={`text-sm font-medium line-clamp-2 ${
+          className={`text-sm font-medium line-clamp-2 pr-8 ${
             isActive
               ? "text-orange-900 dark:text-orange-100"
               : "text-neutral-900 dark:text-neutral-100"
@@ -103,6 +121,37 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
         >
           {displayTitle}
         </h3>
+        {displayTitle !== "New Chat" && ( // Only show copy button if title is not "New Chat"
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleCopyTitle}
+              className="p-1 rounded-md text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-1"
+              title="Copy chat title"
+              aria-label={`Copy title: ${displayTitle}`}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+            </button>
+            {/* Tooltip for copy confirmation */}
+            <span
+              className={`absolute -top-6 right-0 bg-neutral-700 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap transition-opacity duration-300 ${showCopied ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            >
+              Copied!
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Model Badge */}
