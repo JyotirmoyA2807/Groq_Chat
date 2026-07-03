@@ -17,6 +17,7 @@ import robo from "@/assets/roboT.png";
 import copy from "@/assets/copy.svg";
 import { ImageUpload, UploadedImage } from "./ImageUpload";
 import { getModelByValue } from "@/lib/model";
+import { parseThinkingContent } from "@/lib/chat-utils"; // Updated import
 
 export function ChatSession({
   model,
@@ -441,28 +442,4 @@ export function ChatSession({
 function getAvatarUrl(ip: string): string {
   const encodedIp = encodeURIComponent(ip);
   return `https://xvatar.vercel.app/api/avatar/${encodedIp}?rounded=120&size=240&userLogo=true`;
-}
-
-export function parseThinkingContent(text: string) {
-  const thinkingRegex = /<think>([\s\S]*?)<\/think>/gi;
-  const matches = [];
-  let match;
-  let cleanedText = text;
-
-  while ((match = thinkingRegex.exec(text)) !== null) {
-    matches.push({
-      type: "reasoning" as const,
-      text: match[1].trim(),
-      startIndex: match.index,
-      endIndex: match.index + match[0].length,
-    });
-  }
-
-  cleanedText = text.replace(thinkingRegex, "").trim();
-
-  return {
-    reasoning: matches.map((m) => m.text),
-    cleanText: cleanedText,
-    hasReasoning: matches.length > 0,
-  };
 }
