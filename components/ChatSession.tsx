@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import groqpic from "@/assets/groq.jpg";
 import sparkles from "@/assets/Sparkle.svg";
 import send from "@/assets/send.svg";
-import robo from "@/assets/robo.png";
+import robo from "@/assets/roboT.png";
 import copy from "@/assets/copy.svg";
 import { ImageUpload, UploadedImage } from "./ImageUpload";
 import { getModelByValue } from "@/lib/model";
@@ -312,19 +312,19 @@ export function ChatSession({
         ) : (
           <div className="flex flex-col items-center justify-center h-full">
             <p className="text-xl md:text-2xl px-2 font-semibold text-center mx-auto text-stone-500 dark:text-stone-400 tracking-wide">
-              Start Chatting with
-              <br />
-              <span className="text-orange-500 text-2xl md:text-4xl">
-                Groq
-              </span>{" "}
-              .AI Now!
-            </p>
+  Start Chatting with 
+  <br />Your  &nbsp;
+  <span className="text-orange-500 text-2xl md:text-4xl">
+     AI
+  </span>{" "}
+  Assistant
+</p>
             <Image
               src={robo}
               id="pic"
               alt="ROBO"
-              width={200}
-              height={200}
+              width={300}
+              height={300}
               loading="eager"
               className="hover:scale-105 mt-6 transition-all duration-500 active:scale-95"
             />

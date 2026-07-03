@@ -191,7 +191,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
                 <button
                   type="button"
                   onClick={() =>
-                    window.open("https://img-gen7.netlify.app/", "_self")
+                    window.open("https://img-gen7.netlify.app/", "_blank")
                   }
                   className="rounded-lg hover:bg-linear-to-br from-orange-600 to-rose-600 p-2 hover:text-white transition-all active:scale-105 border border-orange-600 font-semibold flex-1"
                 >
