@@ -41,6 +41,7 @@ interface ChatHistoryItemProps {
   isActive?: boolean;
   onContinue: (chat: SavedChat) => void;
   onDelete: (chatId: string) => void;
+  onCopyTitle: (title: string) => void; // New prop
 }
 
 export const ChatHistoryItem = memo(function ChatHistoryItem({
@@ -48,6 +49,7 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
   isActive = false,
   onContinue,
   onDelete,
+  onCopyTitle, // Destructure new prop
 }: ChatHistoryItemProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const model = getModelByValue(chat.model);
@@ -92,9 +94,9 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
       }`}
     >
       {/* Chat Title */}
-      <div className="mb-2">
+      <div className="mb-2 flex items-center justify-between"> {/* Modified this div */}
         <h3
-          className={`text-sm font-medium line-clamp-2 ${
+          className={`text-sm font-medium line-clamp-2 flex-grow ${ // Added flex-grow
             isActive
               ? "text-orange-900 dark:text-orange-100"
               : "text-neutral-900 dark:text-neutral-100"
@@ -103,6 +105,31 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
         >
           {displayTitle}
         </h3>
+        <button
+          type="button"
+          onClick={() => onCopyTitle(displayTitle)} // Call new prop handler
+          className={`ml-2 p-1 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+            isActive
+              ? "text-orange-700 hover:bg-orange-200 dark:text-orange-300 dark:hover:bg-orange-800"
+              : "text-neutral-500 hover:bg-neutral-200 dark:text-neutral-400 dark:hover:bg-neutral-700"
+          }`}
+          title="Copy chat title"
+          aria-label={`Copy title: ${displayTitle}`}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>
+        </button>
       </div>
 
       {/* Model Badge */}
