@@ -150,6 +150,20 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
     setIsSidebarOpen((prev) => !prev);
   }, []);
 
+  const handleCopyTitle = useCallback(
+    (title: string) => {
+      navigator.clipboard.writeText(title)
+        .then(() => {
+          addNotification("Title copied to clipboard!", "success", 2000);
+        })
+        .catch((err) => {
+          console.error("Failed to copy title:", err);
+          addNotification("Failed to copy title.", "error");
+        });
+    },
+    [addNotification]
+  );
+
   // Show error notifications from chat history hook
   useEffect(() => {
     if (error) {
@@ -249,6 +263,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
         onContinueChat={handleContinueChat}
         onDeleteChat={handleDeleteChat}
         onNewChat={handleNewChat}
+        onCopyTitle={handleCopyTitle} // Pass new handler
       />
 
       {/* Notifications */}
