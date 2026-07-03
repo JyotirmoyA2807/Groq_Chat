@@ -8,6 +8,7 @@ import { ChatHistorySidebar } from "./ChatHistory";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { SavedChat } from "@/lib/chat-history";
 import { useNotifications } from "./Notification";
+import { exportChatToMarkdown, downloadMarkdownFile } from "@/lib/chat-export"; // New import
 
 const ChatContainer = memo(({ userIp }: { userIp: string }) => {
   const [selectedModel, setSelectedModel] = useState<Model["value"]>(
@@ -164,6 +165,22 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
     [addNotification]
   );
 
+  // New handler for exporting chat
+  const handleExportChat = useCallback(() => {
+    if (currentMessages.length === 0) {
+      addNotification("No messages to export.", "info");
+      return;
+    }
+    try {
+      const { filename, content } = exportChatToMarkdown(currentMessages, selectedModel);
+      downloadMarkdownFile(filename, content);
+      addNotification("Chat exported successfully!", "success", 3000);
+    } catch (err) {
+      console.error("Failed to export chat:", err);
+      addNotification("Failed to export chat.", "error");
+    }
+  }, [currentMessages, selectedModel, addNotification]);
+
   // Show error notifications from chat history hook
   useEffect(() => {
     if (error) {
@@ -220,6 +237,16 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
                 >
                   🎨 Image Gen
                 </button>{" "}
+                {/* New Export Chat Button */}
+                <button
+                  type="button"
+                  onClick={handleExportChat}
+                  disabled={currentMessages.length === 0}
+                  className="rounded-lg bg-neutral-200 p-2 hover:bg-orange-600 hover:text-neutral-200 dark:bg-neutral-800 dark:hover:bg-orange-600 dark:hover:text-neutral-50 transition-all active:scale-95 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Export chat as Markdown"
+                >
+                  Export Chat
+                </button>
                 {[
                   {
                     label: "Make Shorter",
