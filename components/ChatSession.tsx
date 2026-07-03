@@ -313,7 +313,7 @@ export function ChatSession({
           <div className="flex flex-col items-center justify-center h-full">
             <p className="text-xl md:text-2xl px-2 font-semibold text-center mx-auto text-stone-500 dark:text-stone-400 tracking-wide">
   Start Chatting with 
-  <br />Your  &nbsp;
+  <br />Your   
   <span className="text-orange-500 text-2xl md:text-4xl">
      AI
   </span>{" "}
@@ -428,6 +428,10 @@ export function ChatSession({
               </>
             )}
           </button>
+        </div>
+        {/* Character counter */}
+        <div className="text-xs text-neutral-500 dark:text-neutral-400 text-right pr-2">
+          {input.length} characters
         </div>
       </form>
     </>
