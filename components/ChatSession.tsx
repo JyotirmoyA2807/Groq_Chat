@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import groqpic from "@/assets/groq.jpg";
 import sparkles from "@/assets/Sparkle.svg";
 import send from "@/assets/send.svg";
-import robo from "@/assets/Robo.svg";
+import robo from "@/assets/robo.png";
 import copy from "@/assets/copy.svg";
 import { ImageUpload, UploadedImage } from "./ImageUpload";
 import { getModelByValue } from "@/lib/model";
@@ -323,8 +323,10 @@ export function ChatSession({
               src={robo}
               id="pic"
               alt="ROBO"
-              width={300}
-              className="hover:scale-110 mt-6 transition-all duration-500 active:scale-95"
+              width={200}
+              height={200}
+              loading="eager"
+              className="hover:scale-105 mt-6 transition-all duration-500 active:scale-95"
             />
           </div>
         )}
