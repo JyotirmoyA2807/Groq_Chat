@@ -10,7 +10,6 @@ export interface UseChatHistoryReturn {
   currentChatId: string | null;
   isLoading: boolean;
   error: string | null;
-  autoSaveStatus: 'idle' | 'pending' | 'success' | 'error';
 
   // Actions
   saveCurrentChat: (
@@ -33,7 +32,6 @@ export function useChatHistory(): UseChatHistoryReturn {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle'); // State for auto-save status
 
   // Auto-save refs
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -202,35 +200,18 @@ export function useChatHistory(): UseChatHistoryReturn {
         clearTimeout(autoSaveTimeoutRef.current);
       }
 
-      // Don't auto-save empty messages
-      if (messages.length === 0) {
-        lastAutoSaveRef.current = null; // Reset if messages become empty
-        setAutoSaveStatus('idle');
-        return;
-      }
-
       // Check if we need to save (messages have changed)
       const lastSave = lastAutoSaveRef.current;
       const hasChanged =
         !lastSave ||
         lastSave.messages.length !== messages.length ||
         lastSave.model !== model ||
-        JSON.stringify(lastSave.messages) !== JSON.stringify(messages); // Deep comparison for messages
+        JSON.stringify(lastSave.messages) !== JSON.stringify(messages);
 
-      if (hasChanged) {
-        setAutoSaveStatus('pending'); // Indicate that a save is pending
+      if (hasChanged && messages.length > 0) {
         // Debounce auto-save by 2 seconds
-        autoSaveTimeoutRef.current = setTimeout(async () => {
-          const savedChat = await saveCurrentChat(messages, model);
-          if (savedChat) {
-            lastAutoSaveRef.current = { messages: [...messages], model };
-            setAutoSaveStatus('success');
-          } else {
-            console.error("Auto-save failed.");
-            setAutoSaveStatus('error');
-          }
-          // Reset status after a short delay to allow UI to react
-          setTimeout(() => setAutoSaveStatus('idle'), 1000);
+        autoSaveTimeoutRef.current = setTimeout(() => {
+          lastAutoSaveRef.current = { messages: [...messages], model };
         }, 2000);
       }
     },
@@ -243,7 +224,6 @@ export function useChatHistory(): UseChatHistoryReturn {
       autoSaveTimeoutRef.current = null;
     }
     lastAutoSaveRef.current = null;
-    setAutoSaveStatus('idle'); // Reset status when auto-save is disabled
   }, []);
 
   return {
@@ -252,7 +232,6 @@ export function useChatHistory(): UseChatHistoryReturn {
     currentChatId,
     isLoading,
     error,
-    autoSaveStatus, // Return autoSaveStatus
 
     // Actions
     saveCurrentChat,
