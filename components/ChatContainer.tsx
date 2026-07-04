@@ -33,14 +33,13 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
     enableAutoSave,
     disableAutoSave,
     error,
-    autoSaveStatus, // Get autoSaveStatus
   } = useChatHistory();
 
   const handleModelChange = useCallback(
     (event: React.ChangeEvent<HTMLSelectElement>) => {
       // Save current chat before changing model
       if (currentMessages.length > 0) {
-        saveCurrentChat(currentMessages, selectedModel); // This save is immediate, not auto-save
+        saveCurrentChat(currentMessages, selectedModel);
       }
       setSelectedModel(event.target.value);
       setCurrentChatId(null); // Reset to new chat
@@ -59,10 +58,14 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
       setCurrentMessages(messages);
       // Enable auto-save for current chat
       enableAutoSave(messages, selectedModel);
-      // Removed the fixed timeout notification here.
-      // Notification will now be triggered by autoSaveStatus useEffect.
+      // Show user feedback for save attempt
+      if (messages.length > 0) {
+        setTimeout(() => {
+          addNotification("Chat saved", "success", 2000);
+        }, 2500);
+      }
     },
-    [enableAutoSave, selectedModel] // Removed addNotification from dependencies
+    [enableAutoSave, selectedModel, addNotification]
   );
 
   // Chat history handlers
@@ -72,7 +75,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
       try {
         // Save current chat if it has messages
         if (currentMessages.length > 0 && !currentChatId) {
-          saveCurrentChat(currentMessages, selectedModel); // This save is immediate, not auto-save
+          saveCurrentChat(currentMessages, selectedModel);
         }
 
         // Load the selected chat for continuation
@@ -106,8 +109,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
         const success = await deleteChat(chatId);
         if (success) {
           addNotification("Chat deleted successfully", "success", 3000);
-        }
-        else {
+        } else {
           addNotification("Failed to delete chat", "error");
         }
       } catch (err) {
@@ -122,7 +124,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
     try {
       // Save current chat if it has messages
       if (currentMessages.length > 0) {
-        saveCurrentChat(currentMessages, selectedModel); // This save is immediate, not auto-save
+        saveCurrentChat(currentMessages, selectedModel);
         addNotification("Previous chat saved", "info", 3000);
       }
 
@@ -137,8 +139,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
       console.error("Error starting new chat:", err);
       addNotification("Failed to start new chat", "error");
     }
-  },
-  [
+  }, [
     currentMessages,
     selectedModel,
     saveCurrentChat,
@@ -186,17 +187,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
     if (error) {
       addNotification(error, "error");
     }
-  }, [error, addNotification]); // Added addNotification to dependencies
-
-  // Handle auto-save status notifications
-  useEffect(() => {
-    if (autoSaveStatus === 'success') {
-      addNotification("Chat saved", "success", 2000);
-    } else if (autoSaveStatus === 'error') {
-      addNotification("Auto-save failed", "error");
-    }
-  }, [autoSaveStatus, addNotification]);
-
+  }, [error]); // Remove addNotification from dependencies to prevent re-renders
 
   return (
     <>
