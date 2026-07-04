@@ -56,16 +56,12 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
   const handleMessagesChange = useCallback(
     (messages: UIMessage[]) => {
       setCurrentMessages(messages);
-      // Enable auto-save for current chat
-      enableAutoSave(messages, selectedModel);
-      // Show user feedback for save attempt
-      if (messages.length > 0) {
-        setTimeout(() => {
-          addNotification("Chat saved", "success", 2000);
-        }, 2500);
-      }
+      // Enable auto-save for current chat, and provide a success callback
+      enableAutoSave(messages, selectedModel, () => {
+        addNotification("Chat saved", "success", 2000);
+      });
     },
-    [enableAutoSave, selectedModel, addNotification]
+    [enableAutoSave, selectedModel, addNotification] // currentChatId and setCurrentChatId are handled internally by useChatHistory
   );
 
   // Chat history handlers
@@ -73,7 +69,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
   const handleContinueChat = useCallback(
     (chat: SavedChat) => {
       try {
-        // Save current chat if it has messages
+        // Save current chat if it has messages and is not already saved
         if (currentMessages.length > 0 && !currentChatId) {
           saveCurrentChat(currentMessages, selectedModel);
         }
@@ -139,14 +135,16 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
       console.error("Error starting new chat:", err);
       addNotification("Failed to start new chat", "error");
     }
-  }, [
-    currentMessages,
-    selectedModel,
-    saveCurrentChat,
-    setCurrentChatId,
-    disableAutoSave,
-    addNotification,
-  ]);
+  },
+    [
+      currentMessages,
+      selectedModel,
+      saveCurrentChat,
+      setCurrentChatId,
+      disableAutoSave,
+      addNotification,
+    ]
+  );
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen((prev) => !prev);
@@ -187,7 +185,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
     if (error) {
       addNotification(error, "error");
     }
-  }, [error]); // Remove addNotification from dependencies to prevent re-renders
+  }, [error, addNotification]); // addNotification should be in dependencies
 
   return (
     <>
