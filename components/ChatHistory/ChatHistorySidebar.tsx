@@ -12,6 +12,7 @@ interface ChatHistorySidebarProps {
   onContinueChat: (chat: SavedChat) => void;
   onDeleteChat: (chatId: string) => void;
   onNewChat: () => void;
+  onExportChat: () => void; // New prop for export functionality
 }
 
 export const ChatHistorySidebar = memo(function ChatHistorySidebar({
@@ -22,6 +23,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({
   onContinueChat,
   onDeleteChat,
   onNewChat,
+  onExportChat,
 }: ChatHistorySidebarProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -95,15 +97,26 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({
               <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                 Chat History
               </h2>
-              <button
-                type="button"
-                onClick={onNewChat}
-                className="px-3 py-1.5 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
-                title="Start new chat"
-                aria-label="Start new chat"
-              >
-                New Chat
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={onExportChat}
+                  className="px-3 py-1.5 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                  title="Export current chat as Markdown"
+                  aria-label="Export current chat as Markdown"
+                >
+                  Export
+                </button>
+                <button
+                  type="button"
+                  onClick={onNewChat}
+                  className="px-3 py-1.5 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                  title="Start new chat"
+                  aria-label="Start new chat"
+                >
+                  New Chat
+                </button>
+              </div>
             </div>
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
               {chats.length} of {MAX_CHATS} recent conversations
@@ -117,8 +130,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({
                 <div className="w-16 h-16 mb-4 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                   <svg
                     width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
+                    height="24"                    viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"

@@ -6,8 +6,9 @@ import { models, type Model } from "@/lib/model";
 import { ChatSession } from "./ChatSession";
 import { ChatHistorySidebar } from "./ChatHistory";
 import { useChatHistory } from "@/hooks/useChatHistory";
-import { SavedChat } from "@/lib/chat-history";
+import { SavedChat, generateChatTitle } from "@/lib/chat-history";
 import { useNotifications } from "./Notification";
+import { exportChatAsMarkdown, downloadMarkdownFile } from "@/lib/markdown-export";
 
 const ChatContainer = memo(({ userIp }: { userIp: string }) => {
   const [selectedModel, setSelectedModel] = useState<Model["value"]>(
@@ -147,6 +148,23 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
     addNotification,
   ]);
 
+  const handleExportChat = useCallback(() => {
+    if (currentMessages.length === 0) {
+      addNotification("No messages to export", "info");
+      return;
+    }
+    try {
+      const chatTitle = generateChatTitle(currentMessages);
+      const markdownContent = exportChatAsMarkdown(currentMessages, chatTitle);
+      const filename = `${chatTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
+      downloadMarkdownFile(markdownContent, filename);
+      addNotification("Chat exported successfully!", "success", 3000);
+    } catch (error) {
+      console.error("Error exporting chat:", error);
+      addNotification("Failed to export chat", "error");
+    }
+  }, [currentMessages, addNotification]);
+
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen((prev) => !prev);
   }, []);
@@ -197,8 +215,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
                 >
                   🎨 Image Gen
                 </button>{" "}
-                {[
-                  {
+                {[{
                     label: "Make Shorter",
                     value: "Make it Shorter and simpler.",
                   },
@@ -240,6 +257,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
         onContinueChat={handleContinueChat}
         onDeleteChat={handleDeleteChat}
         onNewChat={handleNewChat}
+        onExportChat={handleExportChat}
       />
 
       {/* Notifications */}
