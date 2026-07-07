@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { UIMessage } from "ai";
 import { SavedChat, chatHistoryManager } from "@/lib/chat-history";
 
+const CHAT_SAVE_DEBOUNCE_MS = 2000; // 2 seconds debounce
+
 export interface UseChatHistoryReturn {
   // State
   chats: SavedChat[];
@@ -23,7 +25,11 @@ export interface UseChatHistoryReturn {
   setCurrentChatId: (chatId: string | null) => void;
 
   // Auto-save functionality
-  enableAutoSave: (messages: UIMessage[], model: string) => void;
+  enableAutoSave: (
+    messages: UIMessage[],
+    model: string,
+    onSaveSuccess?: (chat: SavedChat) => void
+  ) => void;
   disableAutoSave: () => void;
 }
 
@@ -38,6 +44,7 @@ export function useChatHistory(): UseChatHistoryReturn {
   const lastAutoSaveRef = useRef<{
     messages: UIMessage[];
     model: string;
+    chatId: string | null; // Track the chat ID that was last successfully saved
   } | null>(null);
 
   // Load chats from localStorage on mount
@@ -118,7 +125,7 @@ export function useChatHistory(): UseChatHistoryReturn {
         return null;
       }
     },
-    [currentChatId]
+    [currentChatId, setChats, setCurrentChatId, setError] // Added dependencies for completeness
   );
 
   // Load a specific chat
@@ -168,7 +175,7 @@ export function useChatHistory(): UseChatHistoryReturn {
         return false;
       }
     },
-    [currentChatId]
+    [currentChatId, setChats, setCurrentChatId, setError] // Added dependencies
   );
 
   // Clear all chats
@@ -190,32 +197,54 @@ export function useChatHistory(): UseChatHistoryReturn {
       setError("Failed to clear chat history");
       return false;
     }
-  }, []);
+  }, [setChats, setCurrentChatId, setError]); // Added dependencies
 
   // Auto-save functionality
   const enableAutoSave = useCallback(
-    (messages: UIMessage[], model: string) => {
+    (
+      messages: UIMessage[],
+      model: string,
+      onSaveSuccess?: (chat: SavedChat) => void
+    ) => {
+      // Don't auto-save if no messages
+      if (!messages || messages.length === 0) {
+        return;
+      }
+
+      // Check if messages or chat context have actually changed since the last *successful* save
+      const lastSave = lastAutoSaveRef.current;
+      const hasChanged =
+        !lastSave ||
+        lastSave.model !== model ||
+        lastSave.chatId !== currentChatId || // Compare with currentChatId to detect new/switched chats
+        JSON.stringify(lastSave.messages) !== JSON.stringify(messages);
+
+      if (!hasChanged) {
+        return; // No change, no need to save
+      }
+
       // Clear existing timeout
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
       }
 
-      // Check if we need to save (messages have changed)
-      const lastSave = lastAutoSaveRef.current;
-      const hasChanged =
-        !lastSave ||
-        lastSave.messages.length !== messages.length ||
-        lastSave.model !== model ||
-        JSON.stringify(lastSave.messages) !== JSON.stringify(messages);
-
-      if (hasChanged && messages.length > 0) {
-        // Debounce auto-save by 2 seconds
-        autoSaveTimeoutRef.current = setTimeout(() => {
-          lastAutoSaveRef.current = { messages: [...messages], model };
-        }, 2000);
-      }
+      // Debounce auto-save
+      autoSaveTimeoutRef.current = setTimeout(async () => {
+        const savedChat = await saveCurrentChat(messages, model);
+        if (savedChat) {
+          lastAutoSaveRef.current = {
+            messages: [...messages],
+            model,
+            chatId: savedChat.id,
+          };
+          onSaveSuccess?.(savedChat);
+        } else {
+          console.error("Auto-save failed.");
+          // Optionally, trigger an error notification here if onSaveSuccess is not meant for errors
+        }
+      }, CHAT_SAVE_DEBOUNCE_MS);
     },
-    [saveCurrentChat]
+    [saveCurrentChat, currentChatId] // saveCurrentChat is a dependency, currentChatId is used for comparison
   );
 
   const disableAutoSave = useCallback(() => {
@@ -223,7 +252,7 @@ export function useChatHistory(): UseChatHistoryReturn {
       clearTimeout(autoSaveTimeoutRef.current);
       autoSaveTimeoutRef.current = null;
     }
-    lastAutoSaveRef.current = null;
+    lastAutoSaveRef.current = null; // Clear last saved state when auto-save is disabled
   }, []);
 
   return {

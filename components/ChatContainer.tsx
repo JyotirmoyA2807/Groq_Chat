@@ -8,6 +8,7 @@ import { ChatHistorySidebar } from "./ChatHistory";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { SavedChat } from "@/lib/chat-history";
 import { useNotifications } from "./Notification";
+import { exportChatToMarkdown, downloadMarkdownFile } from "@/lib/chat-export"; // New import
 
 const ChatContainer = memo(({ userIp }: { userIp: string }) => {
   const [selectedModel, setSelectedModel] = useState<Model["value"]>(
@@ -55,16 +56,12 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
   const handleMessagesChange = useCallback(
     (messages: UIMessage[]) => {
       setCurrentMessages(messages);
-      // Enable auto-save for current chat
-      enableAutoSave(messages, selectedModel);
-      // Show user feedback for save attempt
-      if (messages.length > 0) {
-        setTimeout(() => {
-          addNotification("Chat saved", "success", 2000);
-        }, 2500);
-      }
+      // Enable auto-save for current chat, and provide a success callback
+      enableAutoSave(messages, selectedModel, () => {
+        addNotification("Chat saved", "success", 2000);
+      });
     },
-    [enableAutoSave, selectedModel, addNotification]
+    [enableAutoSave, selectedModel, addNotification] // currentChatId and setCurrentChatId are handled internally by useChatHistory
   );
 
   // Chat history handlers
@@ -72,7 +69,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
   const handleContinueChat = useCallback(
     (chat: SavedChat) => {
       try {
-        // Save current chat if it has messages
+        // Save current chat if it has messages and is not already saved
         if (currentMessages.length > 0 && !currentChatId) {
           saveCurrentChat(currentMessages, selectedModel);
         }
@@ -138,25 +135,57 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
       console.error("Error starting new chat:", err);
       addNotification("Failed to start new chat", "error");
     }
-  }, [
-    currentMessages,
-    selectedModel,
-    saveCurrentChat,
-    setCurrentChatId,
-    disableAutoSave,
-    addNotification,
-  ]);
+  },
+    [
+      currentMessages,
+      selectedModel,
+      saveCurrentChat,
+      setCurrentChatId,
+      disableAutoSave,
+      addNotification,
+    ]
+  );
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen((prev) => !prev);
   }, []);
+
+  const handleCopyTitle = useCallback(
+    (title: string) => {
+      navigator.clipboard.writeText(title)
+        .then(() => {
+          addNotification("Title copied to clipboard!", "success", 2000);
+        })
+        .catch((err) => {
+          console.error("Failed to copy title:", err);
+          addNotification("Failed to copy title.", "error");
+        });
+    },
+    [addNotification]
+  );
+
+  // New handler for exporting chat
+  const handleExportChat = useCallback(() => {
+    if (currentMessages.length === 0) {
+      addNotification("No messages to export.", "info");
+      return;
+    }
+    try {
+      const { filename, content } = exportChatToMarkdown(currentMessages, selectedModel);
+      downloadMarkdownFile(filename, content);
+      addNotification("Chat exported successfully!", "success", 3000);
+    } catch (err) {
+      console.error("Failed to export chat:", err);
+      addNotification("Failed to export chat.", "error");
+    }
+  }, [currentMessages, selectedModel, addNotification]);
 
   // Show error notifications from chat history hook
   useEffect(() => {
     if (error) {
       addNotification(error, "error");
     }
-  }, [error]); // Remove addNotification from dependencies to prevent re-renders
+  }, [error, addNotification]); // addNotification should be in dependencies
 
   return (
     <>
@@ -197,6 +226,16 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
                 >
                   🎨 Image Gen
                 </button>{" "}
+                {/* New Export Chat Button */}
+                <button
+                  type="button"
+                  onClick={handleExportChat}
+                  disabled={currentMessages.length === 0}
+                  className="rounded-lg bg-neutral-200 p-2 hover:bg-orange-600 hover:text-neutral-200 dark:bg-neutral-800 dark:hover:bg-orange-600 dark:hover:text-neutral-50 transition-all active:scale-95 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Export chat as Markdown"
+                >
+                  Export Chat
+                </button>
                 {[
                   {
                     label: "Make Shorter",
@@ -240,6 +279,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
         onContinueChat={handleContinueChat}
         onDeleteChat={handleDeleteChat}
         onNewChat={handleNewChat}
+        onCopyTitle={handleCopyTitle} // Pass new handler
       />
 
       {/* Notifications */}
