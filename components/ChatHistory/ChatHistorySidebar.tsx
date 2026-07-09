@@ -12,6 +12,7 @@ interface ChatHistorySidebarProps {
   onContinueChat: (chat: SavedChat) => void;
   onDeleteChat: (chatId: string) => void;
   onNewChat: () => void;
+  onCopyTitle: (title: string) => void;
 }
 
 export const ChatHistorySidebar = memo(function ChatHistorySidebar({
@@ -22,6 +23,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({
   onContinueChat,
   onDeleteChat,
   onNewChat,
+  onCopyTitle,
 }: ChatHistorySidebarProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -145,6 +147,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({
                     isActive={chat.id === currentChatId}
                     onContinue={onContinueChat}
                     onDelete={onDeleteChat}
+                    onCopyTitle={onCopyTitle}
                   />
                 ))}
               </div>

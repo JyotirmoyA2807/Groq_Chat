@@ -4,6 +4,8 @@ import { memo, useState } from "react";
 import { SavedChat } from "@/lib/chat-history";
 import { UIMessage } from "ai";
 import { getModelByValue } from "@/lib/model";
+import Image from "next/image";
+import copyIcon from "@/assets/copy.svg";
 
 // Generate display title from messages
 function getDisplayTitle(messages: UIMessage[]): string {
@@ -41,6 +43,7 @@ interface ChatHistoryItemProps {
   isActive?: boolean;
   onContinue: (chat: SavedChat) => void;
   onDelete: (chatId: string) => void;
+  onCopyTitle: (title: string) => void;
 }
 
 export const ChatHistoryItem = memo(function ChatHistoryItem({
@@ -48,8 +51,10 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
   isActive = false,
   onContinue,
   onDelete,
+  onCopyTitle,
 }: ChatHistoryItemProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const model = getModelByValue(chat.model);
   const modelLabel = model?.label || chat.model;
   const displayTitle = getDisplayTitle(chat.messages);
@@ -83,6 +88,18 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
     setShowDeleteConfirm(false);
   };
 
+  const handleCopyTitle = async () => {
+    try {
+      await navigator.clipboard.writeText(displayTitle);
+      setIsCopied(true);
+      onCopyTitle(displayTitle);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy chat title:", err);
+      // Optionally, add an error notification here
+    }
+  };
+
   return (
     <div
       className={`group relative p-3 rounded-lg border transition-all duration-200 ${
@@ -92,9 +109,9 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
       }`}
     >
       {/* Chat Title */}
-      <div className="mb-2">
+      <div className="mb-2 flex items-center justify-between">
         <h3
-          className={`text-sm font-medium line-clamp-2 ${
+          className={`text-sm font-medium line-clamp-2 flex-1 ${
             isActive
               ? "text-orange-900 dark:text-orange-100"
               : "text-neutral-900 dark:text-neutral-100"
@@ -103,6 +120,22 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
         >
           {displayTitle}
         </h3>
+        <div className="relative ml-2">
+          <button
+            type="button"
+            onClick={handleCopyTitle}
+            className="p-1 rounded-md text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-1"
+            title="Copy chat title"
+            aria-label={`Copy chat title: ${displayTitle}`}
+          >
+            <Image src={copyIcon} alt="Copy" width={14} height={14} />
+          </button>
+          {isCopied && (
+            <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs bg-neutral-800 text-white px-2 py-1 rounded-md whitespace-nowrap">
+              Copied!
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Model Badge */}
