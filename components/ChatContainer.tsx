@@ -147,6 +147,13 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
     addNotification,
   ]);
 
+  const handleCopyChatTitle = useCallback(
+    (title: string) => {
+      addNotification(`'${title}' copied to clipboard!`, "success", 2000);
+    },
+    [addNotification]
+  );
+
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen((prev) => !prev);
   }, []);
@@ -156,7 +163,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
     if (error) {
       addNotification(error, "error");
     }
-  }, [error]); // Remove addNotification from dependencies to prevent re-renders
+  }, [error, addNotification]);
 
   return (
     <>
@@ -240,6 +247,7 @@ const ChatContainer = memo(({ userIp }: { userIp: string }) => {
         onContinueChat={handleContinueChat}
         onDeleteChat={handleDeleteChat}
         onNewChat={handleNewChat}
+        onCopyTitle={handleCopyChatTitle}
       />
 
       {/* Notifications */}
